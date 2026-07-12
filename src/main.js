@@ -1,60 +1,50 @@
-import './style.css'
-import javascriptLogo from './assets/javascript.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import { setupCounter } from './counter.js'
+import { items, ropes, $, clamp } from "./game/state.js";
+import { renderer, scene, camera, rig, lamp, dust, Z_HOME } from "./game/scene.js";
+import { SUBSTEPS } from "./game/rope.js";
+import { drawMinimap } from "./game/ui.js";
+import { sizeLasso } from "./game/interact.js";
+import "./game/game.js";
+import "./game/interact.js";
 
-document.querySelector('#app').innerHTML = `
-<section id="center">
-  <div class="hero">
-    <img src="${heroImg}" class="base" width="170" height="179">
-    <img src="${javascriptLogo}" class="framework" alt="JavaScript logo"/>
-    <img src="${viteLogo}" class="vite" alt="Vite logo" />
-  </div>
-  <div>
-    <h1>Get started</h1>
-    <p>Edit <code>src/main.js</code> and save to test <code>HMR</code></p>
-  </div>
-  <button id="counter" type="button" class="counter"></button>
-</section>
+const clock = new THREE.Clock();
+let frameN = 0, lastPct = 0;
 
-<div class="ticks"></div>
+function frame() {
+  requestAnimationFrame(frame);
+  const dt = Math.min(clock.getDelta(), 0.033), t = clock.elapsedTime;
 
-<section id="next-steps">
-  <div id="docs">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#documentation-icon"></use></svg>
-    <h2>Documentation</h2>
-    <p>Your questions, answered</p>
-    <ul>
-      <li>
-        <a href="https://vite.dev/" target="_blank">
-          <img class="logo" src="${viteLogo}" alt="" />
-          Explore Vite
-        </a>
-      </li>
-      <li>
-        <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-          <img class="button-icon" src="${javascriptLogo}" alt="">
-          Learn more
-        </a>
-      </li>
-    </ul>
-  </div>
-  <div id="social">
-    <svg class="icon" role="presentation" aria-hidden="true"><use href="/icons.svg#social-icon"></use></svg>
-    <h2>Connect with us</h2>
-    <p>Join the Vite community</p>
-    <ul>
-      <li><a href="https://github.com/vitejs/vite" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#github-icon"></use></svg>GitHub</a></li>
-      <li><a href="https://chat.vite.dev/" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#discord-icon"></use></svg>Discord</a></li>
-      <li><a href="https://x.com/vite_js" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#x-icon"></use></svg>X.com</a></li>
-      <li><a href="https://bsky.app/profile/vite.dev" target="_blank"><svg class="button-icon" role="presentation" aria-hidden="true"><use href="/icons.svg#bluesky-icon"></use></svg>Bluesky</a></li>
-    </ul>
-  </div>
-</section>
+  for (const it of items) {
+    const g = it.grp;
+    it.target.z = it.baseZ + it.hoverLift + it.dragLift;
+    const ox = g.position.x;
+    g.position.lerp(it.target, 0.2);
+    const vx = g.position.x - ox;
+    it.vel.x += (vx - it.vel.x) * 0.3;
+    const tilt = clamp(-it.vel.x * 0.9, -0.16, 0.16);
+    g.rotation.z += (it.restRot + tilt - g.rotation.z) * 0.14;
+    it.paper.rotation.x = Math.sin(t * 0.7 + it.baseZ * 40) * 0.006;
+  }
 
-<div class="ticks"></div>
-<section id="spacer"></section>
-`
+  const sdt = dt / SUBSTEPS;
+  for (const r of ropes) { for (let s = 0; s < SUBSTEPS; s++) r.step(sdt, t); }
+  for (const r of ropes) r.render();
 
-setupCounter(document.querySelector('#counter'))
+  dust.step(dt, t);
+  rig.apply(t);
+  lamp.intensity = 1.55 + Math.sin(t * 13.7) * 0.012 + Math.sin(t * 3.1) * 0.02;
+
+  if (++frameN % 6 === 0) {
+    drawMinimap();
+    const pct = Math.round((Z_HOME / rig.z) * 100);
+    if (pct !== lastPct) { $("zoomPct").textContent = pct + "%"; lastPct = pct; }
+  }
+  renderer.render(scene, camera);
+}
+frame();
+
+addEventListener("resize", () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  sizeLasso();
+});
