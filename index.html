@@ -806,6 +806,173 @@
           display: none;
         }
       }
+
+      /* ===================== GAME OVERLAYS ===================== */
+      #briefing {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(6, 5, 4, 0.85);
+        backdrop-filter: blur(6px);
+      }
+      #briefCard {
+        width: min(520px, 92vw);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 32px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+      }
+      #briefHead {
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        font-weight: 700;
+        color: var(--red);
+        text-transform: uppercase;
+        margin-bottom: 6px;
+      }
+      #briefTitle {
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--txt);
+        margin-bottom: 4px;
+      }
+      #briefSub {
+        font-size: 13px;
+        color: var(--dim);
+        margin-bottom: 20px;
+      }
+      #briefBody {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--dim);
+        margin-bottom: 24px;
+        max-height: 260px;
+        overflow-y: auto;
+      }
+      #briefBody .redacted {
+        display: inline-block;
+        background: #1a1a1a;
+        color: #1a1a1a;
+        border-radius: 3px;
+        padding: 0 8px;
+        user-select: none;
+      }
+      #briefBegin {
+        width: 100%;
+      }
+
+      #victory {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(6, 5, 4, 0.88);
+        backdrop-filter: blur(8px);
+      }
+      #victory.open {
+        display: flex;
+      }
+      #victoryCard {
+        width: min(480px, 92vw);
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 32px;
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.7);
+        text-align: center;
+      }
+      #victoryBadge {
+        font-size: 48px;
+        margin-bottom: 8px;
+      }
+      #victoryHead {
+        font-size: 28px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        color: var(--red);
+        margin-bottom: 4px;
+      }
+      #victorySub {
+        font-size: 14px;
+        color: var(--dim);
+        margin-bottom: 16px;
+      }
+      #victoryBody {
+        font-size: 14px;
+        line-height: 1.6;
+        color: var(--txt);
+        margin-bottom: 8px;
+        text-align: left;
+      }
+      #victoryStats {
+        display: flex;
+        gap: 16px;
+        justify-content: center;
+        margin: 16px 0 24px;
+      }
+      .vstat {
+        text-align: center;
+      }
+      .vstat strong {
+        display: block;
+        font-size: 24px;
+        color: var(--red);
+      }
+      .vstat span {
+        font-size: 11px;
+        color: var(--faint);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      #victoryBtn {
+        width: 100%;
+      }
+
+      .wrong-flash {
+        animation: wrongFlash 0.6s ease;
+      }
+      @keyframes wrongFlash {
+        0%, 100% { opacity: 1; }
+        20% { opacity: 0.3; }
+        40% { opacity: 1; }
+        60% { opacity: 0.3; }
+        80% { opacity: 1; }
+      }
+      .correct-flash {
+        animation: correctFlash 0.8s ease;
+      }
+      @keyframes correctFlash {
+        0% { box-shadow: 0 0 0 0 rgba(225, 60, 50, 0.6); }
+        50% { box-shadow: 0 0 20px 8px rgba(225, 60, 50, 0.3); }
+        100% { box-shadow: 0 0 0 0 rgba(225, 60, 50, 0); }
+      }
+      #caseProgress {
+        position: fixed;
+        top: 56px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 19;
+        pointer-events: none;
+        font-size: 11px;
+        color: var(--faint);
+        letter-spacing: 0.06em;
+        background: rgba(12, 10, 9, 0.7);
+        padding: 4px 12px;
+        border-radius: 0 0 8px 8px;
+        border: 1px solid var(--line);
+        border-top: none;
+        opacity: 0;
+        transition: opacity 0.5s;
+      }
+      #caseProgress.show {
+        opacity: 1;
+      }
     </style>
   </head>
   <body>
@@ -1220,6 +1387,28 @@
       accept="image/png,image/jpeg,image/webp,image/gif"
     />
 
+    <!-- game overlays -->
+    <div id="briefing">
+      <div id="briefCard">
+        <div id="briefHead">CLASSIFIED CASE FILE</div>
+        <div id="briefTitle">Dossier #BW-47-0924</div>
+        <div id="briefSub">The Redacted</div>
+        <div id="briefBody"></div>
+        <button id="briefBegin" class="btn primary">Begin Investigation</button>
+      </div>
+    </div>
+    <div id="victory">
+      <div id="victoryCard">
+        <div id="victoryBadge">🔍</div>
+        <div id="victoryHead">CASE CLOSED</div>
+        <div id="victorySub"></div>
+        <div id="victoryBody"></div>
+        <div id="victoryStats"></div>
+        <button id="victoryBtn" class="btn primary">Return to Board</button>
+      </div>
+    </div>
+    <div id="caseProgress">Connections: 0 / 0 found</div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script>
@@ -1294,6 +1483,16 @@
           let line = "",
             yy = y;
           for (const w of words) {
+            if (w === "[REDACTED]") {
+              if (line) { ctx.fillText(line, x, yy); line = ""; }
+              ctx.save();
+              ctx.fillStyle = "#1a1a1a";
+              const bw = Math.min(maxW * 0.55, ctx.measureText("████████").width);
+              ctx.fillRect(x, yy - lh + 5, bw, lh - 6);
+              ctx.restore();
+              yy += lh;
+              continue;
+            }
             const t = line ? line + " " + w : w;
             if (ctx.measureText(t).width > maxW && line) {
               ctx.fillText(line, x, yy);
@@ -2117,10 +2316,18 @@
           x.strokeStyle = "#3a352c";
           x.lineWidth = 3;
           x.strokeRect(26, 26, 408, 400);
-          x.fillStyle = "#1d1a14";
-          x.font = 'bold 33px "Courier New",monospace';
           x.textAlign = "center";
-          x.fillText(name.toUpperCase(), 230, 478, 410);
+          if (name.includes("[REDACTED]")) {
+            x.fillStyle = "#1a1a1a";
+            x.fillRect(230 - 80, 478 - 28, 160, 32);
+            x.fillStyle = "#3a352c";
+            x.font = '16px "Courier New",monospace';
+            x.fillText("CLASSIFIED", 230, 478);
+          } else {
+            x.fillStyle = "#1d1a14";
+            x.font = 'bold 33px "Courier New",monospace';
+            x.fillText(name.toUpperCase(), 230, 478, 410);
+          }
           x.fillStyle = "#5a5244";
           x.font = '19px "Courier New",monospace';
           wrapText(x, note || "", 230, 514, 400, 24);
@@ -3395,24 +3602,93 @@
             if (liveRope) {
               if (it && it !== liveRope.a.item) {
                 // tie off
+                const itA = liveRope.a.item;
                 liveRope.tie(it);
                 const r = liveRope;
                 liveRope = null;
-                let cur = r;
-                History.push({
-                  undo: () => {
-                    if (cur && ropes.includes(cur)) {
-                      cur.detach();
-                      cur.kill();
+
+                // Game validation
+                if (GAME.phase === "investigation") {
+                  const correct = GAME.check(itA.id, it.id);
+                  if (correct) {
+                    toast("Connection validated — new intel revealed");
+                    gsap.fromTo(
+                      r.mat,
+                      { emissiveIntensity: 1.2 },
+                      {
+                        emissiveIntensity: 0,
+                        duration: 1.5,
+                        ease: "power2.out",
+                      },
+                    );
+                    r.highlight(true);
+                    setTimeout(() => r.highlight(false), 1200);
+                    if (GAME.complete()) {
+                      setTimeout(() => GAME.showVictory(), 1000);
                     }
-                  },
-                  redo: () => {
-                    cur = new Rope(anchorOf(r.a.item), anchorOf(it), r.color, {
-                      confidence: r.meta.confidence,
+                    // Still add to history
+                    let cur = r;
+                    History.push({
+                      undo: () => {
+                        if (cur && ropes.includes(cur)) {
+                          cur.detach();
+                          cur.kill();
+                        }
+                      },
+                      redo: () => {
+                        cur = new Rope(
+                          anchorOf(itA),
+                          anchorOf(it),
+                          r.color,
+                          { confidence: r.meta.confidence },
+                        );
+                        ropes.push(cur);
+                      },
                     });
-                    ropes.push(cur);
-                  },
-                });
+                  } else {
+                    GAME.wrongGuess();
+                    [itA, it].forEach((item) => {
+                      if (item && item.grp) {
+                        gsap.to(item.grp.position, {
+                          z: 3.5,
+                          duration: 0.1,
+                          yoyo: true,
+                          repeat: 5,
+                          ease: "power2.inOut",
+                        });
+                      }
+                    });
+                    toast("Wrong connection — evidence doesn't match");
+                    setTimeout(() => {
+                      r.detach();
+                      r.kill();
+                    }, 500);
+                    Inspector.refresh();
+                    setHint(
+                      "wrong lead — try connecting different evidence",
+                    );
+                    return;
+                  }
+                } else {
+                  let cur = r;
+                  History.push({
+                    undo: () => {
+                      if (cur && ropes.includes(cur)) {
+                        cur.detach();
+                        cur.kill();
+                      }
+                    },
+                    redo: () => {
+                      cur = new Rope(
+                        anchorOf(itA),
+                        anchorOf(it),
+                        r.color,
+                        { confidence: r.meta.confidence },
+                      );
+                      ropes.push(cur);
+                    },
+                  });
+                }
                 gsap.fromTo(
                   it.pin.userData.head.scale,
                   { x: 1.6, y: 1.6, z: 1.6 },
@@ -4189,6 +4465,143 @@
           toast("Drag any empty cork to pan — always on");
 
         /* ============================================================
+   GAME ENGINE
+   ============================================================ */
+        const GAME = {
+          phase: "briefing",
+          correctPairs: [],
+          foundPairs: new Set(),
+          redacted: new Set(),
+          unredactMap: {},
+          displayLabels: {},
+          wrongCount: 0,
+          maxWrong: 3,
+          wrongFlashItem: null,
+
+          pairKey(a, b) {
+            return a < b ? `${a}|${b}` : `${b}|${a}`;
+          },
+
+          registerCorrect(aId, bId, opts = {}) {
+            const key = this.pairKey(aId, bId);
+            this.correctPairs.push(key);
+            if (opts.label) this.displayLabels[key] = opts.label;
+            if (opts.unredacts) {
+              this.unredactMap[key] = opts.unredacts;
+            }
+          },
+
+          redactItem(it, fields) {
+            if (!it) return;
+            this.redacted.add(it.id);
+            it._origText = it.text;
+            it._origTitle = it.title;
+            if (fields.text != null) it.text = fields.text;
+            if (fields.title != null) it.title = fields.title;
+            if (it.redraw) it.redraw(it);
+          },
+
+          unredactItem(it) {
+            if (!it || !this.redacted.has(it.id)) return;
+            this.redacted.delete(it.id);
+            if (it._origText != null) it.text = it._origText;
+            if (it._origTitle != null) it.title = it._origTitle;
+            if (it.redraw) it.redraw(it);
+          },
+
+          unredactByConnection(aId, bId) {
+            const key = this.pairKey(aId, bId);
+            const ids = this.unredactMap[key] || [];
+            ids.forEach((id) => {
+              const it = items.find((i) => i.id === id);
+              this.unredactItem(it);
+            });
+          },
+
+          check(aId, bId) {
+            const key = this.pairKey(aId, bId);
+            if (this.correctPairs.includes(key) && !this.foundPairs.has(key)) {
+              this.foundPairs.add(key);
+              this.unredactByConnection(aId, bId);
+              this.updateProgress();
+              return true;
+            }
+            return false;
+          },
+
+          complete() {
+            return this.foundPairs.size >= this.correctPairs.length;
+          },
+
+          updateProgress() {
+            const el = $("caseProgress");
+            if (el) {
+              el.textContent = `Connections: ${this.foundPairs.size} / ${this.correctPairs.length} found`;
+              if (this.foundPairs.size > 0) el.classList.add("show");
+            }
+          },
+
+          showVictory() {
+            const el = $("victory");
+            el.classList.add("open");
+            const pct = Math.round(
+              (this.foundPairs.size / Math.max(this.correctPairs.length, 1)) *
+                100,
+            );
+            $("victorySub").textContent = `Dossier #BW-47-0924 — ${pct}% solved`;
+            $("victoryBody").innerHTML =
+              `<p>You correctly identified <strong>${this.foundPairs.size}</strong> out of <strong>${this.correctPairs.length}</strong> connections in the Blackwood case.</p>
+          <p style="margin-top:12px;color:var(--dim)">Richard Blackwood was found dead in his loft on October 12, 2023. The evidence points to a complex web of financial motives, personal connections, and a broken lock that suggests someone had a key all along.</p>`;
+            $("victoryStats").innerHTML = `
+          <div class="vstat"><strong>${pct}%</strong><span>Accuracy</span></div>
+          <div class="vstat"><strong>${this.foundPairs.size}</strong><span>Connections</span></div>
+          <div class="vstat"><strong>${this.wrongCount}</strong><span>Mistakes</span></div>`;
+          },
+
+          wrongGuess() {
+            this.wrongCount++;
+            toast(`Wrong connection · ${this.maxWrong - this.wrongCount} strikes remaining`);
+            if (this.wrongCount >= this.maxWrong) {
+              toast("Case compromised — too many false leads");
+            }
+          },
+        };
+
+        function showBriefing() {
+          const el = $("briefing");
+          const body = $("briefBody");
+          body.innerHTML = `
+        <p><strong>Case:</strong> Dossier #BW-47-0924</p>
+        <p><strong>Victim:</strong> <span class="redacted">████████ █████████</span></p>
+        <p><strong>Location:</strong> Loft 4B, Bldg 220, Downtown District</p>
+        <p><strong>Date:</strong> October 12, 2023</p>
+        <p><strong>Status:</strong> <span class="redacted">███████</span> — details classified</p>
+        <hr style="border-color:var(--line);margin:16px 0">
+        <p>At approximately 08:47 hours, a <span class="redacted">██████ █████</span> was discovered in a downtown residential loft. Initial reports indicate <span class="redacted">████████ ███████</span> was last seen the previous evening.</p>
+        <p style="margin-top:12px">The investigation team has assembled preliminary evidence on the board. Your task: <strong>connect the evidence</strong> to uncover the truth. Use the thread tool (<b>C</b>) to link related items. Correct connections will reveal redacted information.</p>
+        <p style="margin-top:12px;color:var(--faint);font-size:12px">Warning: False connections may compromise the case.</p>
+          `;
+          el.style.display = "flex";
+        }
+
+        $("briefBegin").onclick = () => {
+          $("briefing").style.display = "none";
+          GAME.phase = "investigation";
+          // Open on the crime scene photo after briefing
+          setTimeout(() => {
+            if (SEED && SEED.scene) {
+              selectOnly(SEED.scene);
+              rig.tz = 44;
+            }
+          }, 600);
+          toast("Case opened — investigate the evidence");
+        };
+
+        $("victoryBtn").onclick = () => {
+          $("victory").classList.remove("open");
+        };
+
+        /* ============================================================
    SEED — the Redacted Dossier
    ============================================================ */
         const DAY = 864e5,
@@ -4357,7 +4770,90 @@
         }
         const SEED = seedBoard();
 
-        /* opening: pull in from wide, then open inspector on the crime scene */
+        /* ---- register game connections ---- */
+        (function registerCase() {
+          const S = SEED;
+          // Define which connections are "correct" for the game and what they unredact
+          GAME.registerCorrect(S.scene.id, S.blackwood.id, {
+            label: "Crime scene → Victim",
+            unredacts: [S.blackwood.id],
+          });
+          GAME.registerCorrect(S.scene.id, S.keys.id, {
+            label: "Crime scene → Keys",
+            unredacts: [S.lock.id],
+          });
+          GAME.registerCorrect(S.prints.id, S.bag.id, {
+            label: "Prints → Evidence bag",
+            unredacts: [S.fiber.id],
+          });
+          GAME.registerCorrect(S.herald.id, S.lowell.id, {
+            label: "News article → Suspect",
+            unredacts: [S.lowell.id],
+          });
+          GAME.registerCorrect(S.stmt.id, S.carter.id, {
+            label: "Statement → Witness",
+            unredacts: [S.stmt.id],
+          });
+          GAME.registerCorrect(S.blackwood.id, S.finrev.id, {
+            label: "Victim → Stock crash",
+            unredacts: [S.finrev.id],
+          });
+          GAME.registerCorrect(S.plan.id, S.lock.id, {
+            label: "Floor plan → Broken lock",
+          });
+          GAME.registerCorrect(S.scene.id, S.fiber.id, {
+            label: "Crime scene → Fiber evidence",
+          });
+          GAME.registerCorrect(S.alley.id, S.plan.id, {
+            label: "Alley → Floor plan",
+            unredacts: [S.alley.id],
+          });
+          GAME.registerCorrect(S.scene.id, S.lowell.id, {
+            label: "Crime scene → Person of interest",
+          });
+          GAME.registerCorrect(S.scene.id, S.map.id, {
+            label: "Crime scene → Location",
+          });
+          GAME.registerCorrect(S.car.id, S.map.id, {
+            label: "Vehicle → Location",
+            unredacts: [S.car.id],
+          });
+
+          // Apply redactions to seed items
+          GAME.redactItem(S.blackwood, {
+            title: "[REDACTED]",
+            text: "[REDACTED] · [REDACTED]",
+          });
+          GAME.redactItem(S.lowell, {
+            text: "CFO, [REDACTED] · [REDACTED]",
+          });
+          GAME.redactItem(S.finrev, {
+            text: "[REDACTED] stock plummets after CEO death",
+          });
+          GAME.redactItem(S.fiber, {
+            text: "[REDACTED] · 14-8397",
+          });
+          GAME.redactItem(S.lock, {
+            text: "[REDACTED]\nNo signs of\nforced entry",
+          });
+          GAME.redactItem(S.stmt, {
+            text: '"I heard a loud thud around [REDACTED]. Thought it was [REDACTED]."',
+          });
+          GAME.redactItem(S.carter, {
+            text: "[REDACTED], loft 4C",
+          });
+          GAME.redactItem(S.herald, {
+            text: "CEO [REDACTED] in downtown [REDACTED]",
+          });
+          GAME.redactItem(S.car, {
+            text: "[REDACTED] · Pine St, [REDACTED]",
+          });
+          GAME.redactItem(S.alley, {
+            text: "[REDACTED] · bldg 220",
+          });
+        })();
+
+        /* opening: pull in from wide, then show briefing */
         rig.z = 150;
         rig.tz = Z_HOME;
         gsap.from("#topbar", {
@@ -4381,7 +4877,8 @@
           delay: 0.55,
           ease: "power3.out",
         });
-        setTimeout(() => selectOnly(SEED.scene), 1400);
+        setTimeout(() => showBriefing(), 1000);
+        GAME.updateProgress();
 
         /* ============================================================
    MAIN LOOP
