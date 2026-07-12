@@ -2027,6 +2027,7 @@
             vel: new THREE.Vector2(),
             restRot: grp.rotation.z,
             redraw: opts.redraw || null,
+            phase: opts.phase || 1,
             meta: {
               created: opts.created || Date.now(),
               by: opts.by || "Det. R. Parker",
@@ -3542,6 +3543,7 @@
         }
 
         const railTools = [...document.querySelectorAll(".rtool[data-tool]")];
+        let _phaseHint = "";
         function setTool(t) {
           if (liveRope) cancelLiveRope();
           TOOL = t;
@@ -3555,7 +3557,7 @@
               ? "<b>click a pin</b> to anchor a thread — it will follow your cursor"
               : t === "lasso"
                 ? "drag to lasso items"
-                : "drag the board to pan · scroll to zoom · <b>C</b> to string a thread",
+                : _phaseHint || "drag the board to pan · scroll to zoom · <b>C</b> to string a thread",
           );
         }
         railTools.forEach((b) => (b.onclick = () => setTool(b.dataset.tool)));
@@ -3626,6 +3628,7 @@
                     if (GAME.complete()) {
                       setTimeout(() => GAME.showVictory(), 1000);
                     }
+                    GAME.checkPhaseUnlock(itA.id, it.id);
                     // Still add to history
                     let cur = r;
                     History.push({
@@ -4467,8 +4470,16 @@
         /* ============================================================
    GAME ENGINE
    ============================================================ */
+        const PHASES = [
+          { id: 1, name: "The Scene", desc: "Examine the crime scene and identify the victim." },
+          { id: 2, name: "Forensic Analysis", desc: "Process the evidence collected from the scene." },
+          { id: 3, name: "Witness Accounts", desc: "Interview witnesses and establish the timeline." },
+          { id: 4, name: "Persons of Interest", desc: "Investigate suspects and uncover their motives." },
+        ];
+
         const GAME = {
           phase: "briefing",
+          currentPhase: 1,
           correctPairs: [],
           foundPairs: new Set(),
           redacted: new Set(),
@@ -4478,9 +4489,65 @@
           maxWrong: 3,
           wrongFlashItem: null,
 
-          pairKey(a, b) {
-            return a < b ? `${a}|${b}` : `${b}|${a}`;
+          phaseItemIds: {}, // phase# -> [itemId]
+          phaseUnlockKeys: [], // connectionKeys that unlock phases [key, phase#]
+          phaseUnlocked: { 1: true },
+
+          registerPhaseItem(phase, itemId) {
+            if (!this.phaseItemIds[phase]) this.phaseItemIds[phase] = [];
+            this.phaseItemIds[phase].push(itemId);
           },
+
+          registerPhaseUnlock(connectionKey, phaseToUnlock) {
+            this.phaseUnlockKeys.push([connectionKey, phaseToUnlock]);
+          },
+
+          setPhase(phase) {
+            this.currentPhase = phase;
+            GAME.phase = "investigation";
+            // Show items for this phase
+            const ids = this.phaseItemIds[phase] || [];
+            ids.forEach((id) => {
+              const it = items.find((i) => i.id === id);
+              if (it && !it.grp.visible) {
+                it.grp.visible = true;
+                gsap.fromTo(
+                  it.grp.scale,
+                  { x: 0.3, y: 0.3, z: 0.3 },
+                  {
+                    x: 1, y: 1, z: 1,
+                    duration: 0.7,
+                    ease: "back.out(1.7)",
+                    delay: Math.random() * 0.3,
+                  },
+                );
+                it.ropes.forEach((r) => r.syncVisible());
+              }
+            });
+            // Update hint
+            if (phase <= PHASES.length) {
+              const p = PHASES[phase - 1];
+              _phaseHint = `<b>Phase ${phase}: ${p.name}</b> — ${p.desc} · <b>C</b> to connect evidence`;
+              setHint(_phaseHint);
+            }
+            if (phase > 1) {
+              toast(`Phase ${phase} unlocked — ${PHASES[phase - 1].name}`);
+            }
+          },
+
+          checkPhaseUnlock(aId, bId) {
+            const key = this.pairKey(aId, bId);
+            for (const [unlockKey, phase] of this.phaseUnlockKeys) {
+              if (unlockKey === key && !this.phaseUnlocked[phase]) {
+                this.phaseUnlocked[phase] = true;
+                this.setPhase(phase);
+                return true;
+              }
+            }
+            return false;
+          },
+
+          pairKey(a, b) {
 
           registerCorrect(aId, bId, opts = {}) {
             const key = this.pairKey(aId, bId);
@@ -4587,6 +4654,7 @@
         $("briefBegin").onclick = () => {
           $("briefing").style.display = "none";
           GAME.phase = "investigation";
+          GAME.setPhase(1);
           // Open on the crime scene photo after briefing
           setTimeout(() => {
             if (SEED && SEED.scene) {
@@ -4594,7 +4662,7 @@
               rig.tz = 44;
             }
           }, 600);
-          toast("Case opened — investigate the evidence");
+          toast("Case opened — connect the crime scene to the victim to begin");
         };
 
         $("victoryBtn").onclick = () => {
@@ -4615,137 +4683,146 @@
               by: o.by || "Det. R. Parker",
             });
           S.motive = Create.sticky({
-            x: -52,
-            y: 16,
+            x: -52, y: 16,
             text: "Motive\nFinancial?",
             tint: "y",
             created: T0 + 2 * DAY,
+            phase: 4,
           });
           S.car = Create.photo({
-            x: -38,
-            y: 17,
+            x: -38, y: 17,
             style: "car",
             text: "vehicle · Pine St, 01:22",
             created: T0,
+            phase: 4,
           });
           S.prints = Create.print({
-            x: -22,
-            y: 17,
+            x: -22, y: 17,
             text: "F-12 · #6-211",
             created: T0 + 1 * DAY,
+            phase: 2,
           });
           S.herald = Create.news({
-            x: -6,
-            y: 15,
+            x: -6, y: 15,
             text: "CEO found dead in downtown loft",
             created: T0,
+            phase: 4,
           });
           S.alley = Create.photo({
-            x: 10,
-            y: 16,
+            x: 10, y: 16,
             style: "alley",
             text: "rear alley · bldg 220",
             created: T0,
+            phase: 4,
           });
           S.lowell = Create.suspect({
-            x: 26,
-            y: 14,
+            x: 26, y: 14,
             title: "Marcus Lowell",
             text: "CFO, Lowell Tech · rival",
             role: "PERSON OF INTEREST",
             created: T0 + 1 * DAY,
+            phase: 4,
           });
           S.map = Create.map({
-            x: -40,
-            y: -2,
+            x: -40, y: -2,
             text: "Downtown District",
             created: T0,
+            phase: 4,
           });
           S.scene = Create.photo({
-            x: -8,
-            y: -2,
+            x: -8, y: -2,
             style: "loft",
             text: "CRIME SCENE — Loft 4B",
             created: T0,
+            phase: 1,
           });
           S.stmt = Create.statement({
-            x: 10,
-            y: -1,
+            x: 10, y: -1,
             sig: "N. Carter",
             text: '"I heard a loud thud around 10pm. Thought it was furniture."',
             created: T0 + 1 * DAY,
+            phase: 3,
           });
           S.lastseen = Create.sticky({
-            x: 24,
-            y: -1,
+            x: 24, y: -1,
             text: "Last seen\nOct 11\n9:47 PM",
             tint: "y",
             created: T0 + 2 * DAY,
+            phase: 3,
           });
           S.bag = Create.bag({
-            x: -46,
-            y: -19,
+            x: -46, y: -19,
             title: "14-8397",
             date: "10/12/23",
             text: "Black fiber found on windowsill.",
             created: T0 + 1 * DAY,
+            phase: 2,
           });
           S.fiber = Create.photo({
-            x: -31,
-            y: -16,
+            x: -31, y: -16,
             style: "fiber",
             text: "black fiber · 14-8397",
             created: T0 + 1 * DAY,
+            phase: 2,
           });
           S.blackwood = Create.suspect({
-            x: -18,
-            y: -19,
+            x: -18, y: -19,
             title: "Richard Blackwood",
             text: "CEO, Blackwood Corp",
             role: "DECEASED",
             created: T0,
+            phase: 1,
           });
           S.family = Create.sticky({
-            x: -7,
-            y: -20,
+            x: -7, y: -20,
             text: "Interview\nfamily",
             tint: "y",
             created: T0 + 3 * DAY,
+            phase: 4,
           });
-          S.plan = Create.plan({ x: 3, y: -15, created: T0 + 2 * DAY });
-          S.keys = Create.key({ x: 13, y: -9, title: "4B", created: T0 });
+          S.plan = Create.plan({
+            x: 3, y: -15,
+            created: T0 + 2 * DAY,
+            phase: 1,
+          });
+          S.keys = Create.key({
+            x: 13, y: -9,
+            title: "4B",
+            created: T0,
+            phase: 1,
+          });
           S.lock = Create.sticky({
-            x: 12,
-            y: -20,
+            x: 12, y: -20,
             text: "Broken lock\nNo signs of\nforced entry",
             tint: "y",
             created: T0 + 2 * DAY,
+            phase: 3,
           });
           S.mercer = Create.suspect({
-            x: 23,
-            y: -16,
+            x: 23, y: -16,
             title: "Dylan Mercer",
             text: "business partner",
             role: "ASSOCIATE",
             gender: "m",
             created: T0 + 3 * DAY,
+            phase: 4,
           });
           S.carter = Create.suspect({
-            x: 36,
-            y: -10,
+            x: 36, y: -10,
             title: "Nadia Carter",
             text: "neighbor, loft 4C",
             role: "WITNESS",
             gender: "f",
             created: T0 + 1 * DAY,
+            phase: 3,
           });
           S.finrev = Create.news({
-            x: 40,
-            y: -20,
+            x: 40, y: -20,
             text: "Lowell Tech stock plummets after CEO death",
             paper: "Financial Review",
             chart: true,
             created: T0 + 4 * DAY,
+            phase: 4,
           });
 
           const R = THREADS[0].color,
@@ -4769,6 +4846,35 @@
           return S;
         }
         const SEED = seedBoard();
+
+        /* ---- register phase items and unlocks ---- */
+        (function initPhases() {
+          const S = SEED;
+          // Register phase items
+          Object.values(S).forEach((it) => {
+            if (it && it.id) {
+              GAME.registerPhaseItem(it.phase, it.id);
+            }
+          });
+          // Register phase unlock connections
+          GAME.registerPhaseUnlock(
+            GAME.pairKey(S.scene.id, S.blackwood.id),
+            2,
+          );
+          GAME.registerPhaseUnlock(
+            GAME.pairKey(S.prints.id, S.bag.id),
+            3,
+          );
+          GAME.registerPhaseUnlock(
+            GAME.pairKey(S.stmt.id, S.carter.id),
+            4,
+          );
+          // Hide all phase 2+ items initially, start with phase 1
+          items.forEach((it) => {
+            if (it.phase > 1) it.grp.visible = false;
+          });
+          ropes.forEach((r) => r.syncVisible());
+        })();
 
         /* ---- register game connections ---- */
         (function registerCase() {
